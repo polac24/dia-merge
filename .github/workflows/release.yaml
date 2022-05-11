@@ -1,0 +1,25 @@
+name: release_binaries
+on:
+  release:
+    types: created
+
+jobs:
+  macOS:
+    name: Add macOS binaries to the release page
+    runs-on: macOS-latest
+    env:
+      XCODE_VERSION: ${{ '13.1' }}
+    steps:
+      - name: Select Xcode
+        run: "sudo xcode-select -s /Applications/Xcode_$XCODE_VERSION.app"
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Build
+        run: ./build.sh
+      - name: Upload binary to the release page
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/Release/dia-merge
+          tag: ${{ github.ref }}
+          overwrite: true
