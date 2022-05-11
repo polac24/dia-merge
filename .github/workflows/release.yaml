@@ -9,6 +9,7 @@ jobs:
     runs-on: macOS-latest
     env:
       XCODE_VERSION: ${{ '13.1' }}
+    permissions: write-all
     steps:
       - name: Select Xcode
         run: "sudo xcode-select -s /Applications/Xcode_$XCODE_VERSION.app"
@@ -20,7 +21,7 @@ jobs:
         uses: svenstaro/upload-release-action@v1-release
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          asset_path: ./build/Release/dia-merge
+          file: build/Release/dia-merge
           asset_name: dia-merge-x86_64
           tag: ${{ github.ref }}
           overwrite: true
