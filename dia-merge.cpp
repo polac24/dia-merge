@@ -392,16 +392,21 @@ void SDiagsWriter::AddCharSourceRangeToRecord(CharSourceRange Range,
 unsigned SDiagsWriter::getEmitFile(const char *FileName){
   if (!FileName)
     return 0;
-
-  unsigned &entry = State->Files[FileName];
-  if (entry)
-    return entry;
-
-  // Lazily generate the record for the file.
-  entry = State->Files.size();
-  StringRef Name(FileName);
+    
+    StringRef Name(FileName);
     auto remapped = PathsRemappper->remap(Name);
     StringRef RemappedName(remapped);
+
+    // TODO: Reuse file abbrevations
+    // This was added as Densemap returns values for not valid entries
+    State->Files.clear();
+  unsigned &entry = State->Files[RemappedName.str().c_str()];
+    if (entry) {
+        return entry;
+    }
+
+  // Lazily generate the record for the file.
+    entry = State->Files.size();
     RecordData::value_type Record[] = {clang::serialized_diags::RECORD_FILENAME, entry, 0 /* For legacy */,
                                      0 /* For legacy */, RemappedName.size()};
     State->Stream.EmitRecordWithBlob(State->Abbrevs.get(clang::serialized_diags::RECORD_FILENAME), Record,
