@@ -23,6 +23,9 @@ static cl::list<std::string> PathRemaps("remap",
                                         cl::value_desc("regex=replacement"));
 static cl::alias PathRemapsAlias("r", cl::aliasopt(PathRemaps));
 
+static cl::opt<bool> Stream("stream", cl::desc("Read the dia from the fifo file. Requires exactly one input path"), cl::init(false));
+static cl::alias StreamAlias("s", cl::aliasopt(Stream));
+
 struct Remapper {
 public:
   std::string remap(const llvm::StringRef input) const {
@@ -246,6 +249,7 @@ private:
   std::shared_ptr<SharedState> State;
 };
 
+static SDiagsWriter *sharedWriter;
 
 class SDiagsMerger : clang::serialized_diags::SerializedDiagnosticReader {
   SDiagsWriter &Writer;
@@ -903,7 +907,10 @@ std::error_code SDiagsMerger::visitDiagFlagRecord(unsigned ID, StringRef Name) {
 
 
 
-
+void signalHandler( int signum ) {
+  sharedWriter->finish();
+  exit(signum);
+}
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
@@ -933,8 +940,25 @@ int main(int argc, char **argv) {
             
     auto writer = SDiagsWriter(OutputFilename.c_str(), DiagnosticOpts.get(), false, remapper);
     auto merger = new SDiagsMerger(writer);
-    for (const auto &filename : InputFilename) {
-        merger->mergeRecordsFromFile(filename.c_str());
+
+    if (Stream) {
+        // save to a file once the process is interupted
+        sharedWriter = &writer;
+        signal(SIGINT, signalHandler);
+
+        if (InputFilename.size() != 1) {
+            errs() << "Error input: in the stream mode, provide only a single input file" << "\n";
+            return -1;
+        }
+        auto filename = InputFilename[0];
+        // loop merging the steram file (fifo) until an interrupt signal
+        while(true) {
+            merger->mergeRecordsFromFile(filename.c_str());
+        }
+    } else {
+        for (const auto &filename : InputFilename) {
+            merger->mergeRecordsFromFile(filename.c_str());
+        }
     }
     writer.finish();
   return EXIT_SUCCESS;
