@@ -1,3 +1,23 @@
+// Copyright (c) 2022 Bartosz Polaczyk
+//
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+
 #include "clang/Frontend/DiagnosticRenderer.h"
 #include "clang/Frontend/SerializedDiagnosticReader.h"
 #include "clang/Lex/Lexer.h"
@@ -26,6 +46,8 @@ static cl::alias PathRemapsAlias("r", cl::aliasopt(PathRemaps));
 static cl::opt<bool> Stream("stream", cl::desc("Read the dia from the fifo file. Requires exactly one input path"), cl::init(false));
 static cl::alias StreamAlias("s", cl::aliasopt(Stream));
 
+// Remapper inspired by https://github.com/MobileNativeFoundation/index-import
+
 struct Remapper {
 public:
   std::string remap(const llvm::StringRef input) const {
@@ -52,8 +74,8 @@ public:
   std::vector<std::pair<std::regex, std::string>> _remaps;
 };
 
-
-
+// Based on LLVM's BitcodeWriter.h, SerializedDiagnosticPrinter.cpp
+// and other files in https://github.com/llvm/llvm-project/
 
 typedef SmallVector<uint64_t, 64> RecordData;
 typedef SmallVectorImpl<uint64_t> RecordDataImpl;
@@ -78,8 +100,6 @@ public:
     return Abbrevs[recordID];
   }
 };
-
-/* Code inspired by the LLVM codebase */
 
 class SDiagsWriter : public DiagnosticConsumer {
   friend class SDiagsRenderer;
@@ -392,24 +412,24 @@ void SDiagsWriter::AddCharSourceRangeToRecord(CharSourceRange Range,
 unsigned SDiagsWriter::getEmitFile(const char *FileName){
   if (!FileName)
     return 0;
-    
-    StringRef Name(FileName);
-    auto remapped = PathsRemappper->remap(Name);
-    StringRef RemappedName(remapped);
 
-    // TODO: Reuse file abbrevations
-    // This was added as Densemap returns values for not valid entries
-    State->Files.clear();
+  StringRef Name(FileName);
+  auto remapped = PathsRemappper->remap(Name);
+  StringRef RemappedName(remapped);
+
+  // TODO(polac24): Reuse file abbrevations - right now it always emits filepath
+  // This workaround was added as Densemap returns values for not valid entries.
+  State->Files.clear();
   unsigned &entry = State->Files[RemappedName.str().c_str()];
     if (entry) {
         return entry;
     }
 
   // Lazily generate the record for the file.
-    entry = State->Files.size();
-    RecordData::value_type Record[] = {clang::serialized_diags::RECORD_FILENAME, entry, 0 /* For legacy */,
+  entry = State->Files.size();
+  RecordData::value_type Record[] = {clang::serialized_diags::RECORD_FILENAME, entry, 0 /* For legacy */,
                                      0 /* For legacy */, RemappedName.size()};
-    State->Stream.EmitRecordWithBlob(State->Abbrevs.get(clang::serialized_diags::RECORD_FILENAME), Record,
+  State->Stream.EmitRecordWithBlob(State->Abbrevs.get(clang::serialized_diags::RECORD_FILENAME), Record,
                                      RemappedName);
 
   return entry;
@@ -418,9 +438,9 @@ unsigned SDiagsWriter::getEmitFile(const char *FileName){
 void SDiagsWriter::EmitCharSourceRange(CharSourceRange R,
                                        const SourceManager &SM) {
   State->Record.clear();
-    State->Record.push_back(clang::serialized_diags::RECORD_SOURCE_RANGE);
+  State->Record.push_back(clang::serialized_diags::RECORD_SOURCE_RANGE);
   AddCharSourceRangeToRecord(R, State->Record, SM);
-    State->Stream.EmitRecordWithAbbrev(State->Abbrevs.get(clang::serialized_diags::RECORD_SOURCE_RANGE),
+  State->Stream.EmitRecordWithAbbrev(State->Abbrevs.get(clang::serialized_diags::RECORD_SOURCE_RANGE),
                                      State->Record);
 }
 
@@ -600,9 +620,7 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   if (IsFinishing) {
     SmallString<256> diagnostic;
     Info.FormatDiagnostic(diagnostic);
-//    getMetaDiags()->Report(
-//        diag::warn_fe_serialized_diag_failure_during_finalisation)
-//        << diagnostic;
+    // TODO(polac24): implement error handling
     return;
   }
 
@@ -792,7 +810,7 @@ void SDiagsWriter::RemoveOldDiagnostics() {
   if (!llvm::sys::fs::remove(State->OutputFile))
     return;
 
-//  getMetaDiags()->Report(diag::warn_fe_serialized_diag_merge_failure);
+  // TODO(polac24): implement error handling
   // Disable merging child records, as whatever is in this file may be
   // misleading.
   MergeChildRecords = false;
@@ -818,7 +836,7 @@ void SDiagsWriter::finish() {
 
     if (llvm::sys::fs::exists(State->OutputFile))
         if (SDiagsMerger(*this).mergeRecordsFromFile(State->OutputFile.c_str())){
-//            getMetaDiags()->Report(diag::warn_fe_serialized_diag_merge_failure);
+          // TODO(polac24): implement error handling
         }
   }
 
@@ -826,8 +844,7 @@ void SDiagsWriter::finish() {
   auto OS = std::make_unique<llvm::raw_fd_ostream>(State->OutputFile.c_str(),
                                                     EC, llvm::sys::fs::OF_None);
   if (EC) {
-//    getMetaDiags()->Report(diag::warn_fe_serialized_diag_failure)
-//        << State->OutputFile << EC.message();
+    // TODO(polac24): implement error handling - write to the stderr
     OS->clear_error();
     return;
   }
@@ -838,7 +855,7 @@ void SDiagsWriter::finish() {
 
   assert(!OS->has_error());
   if (OS->has_error()) {
-//    getMetaDiags()->Report(diag:clang::serialized_diags::OS->error().message();
+    // TODO(polac24): implement error handling - write to the stderr
     OS->clear_error();
   }
 }
