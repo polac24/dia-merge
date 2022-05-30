@@ -29,3 +29,6 @@ popd
 
 ### Test the file
 ./build/Release/dia-merge --help
+
+### Compress the file to a zip
+zip -rj ./build/Release/dia-merge.zip ./build/Release/dia-merge
