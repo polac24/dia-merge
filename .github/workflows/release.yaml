@@ -21,7 +21,7 @@ jobs:
         uses: svenstaro/upload-release-action@v1-release
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/Release/dia-merge
-          asset_name: dia-merge-x86_64
+          file: build/Release/dia-merge.zip
+          asset_name: dia-merge-x86_64.zip
           tag: ${{ github.ref }}
           overwrite: true
