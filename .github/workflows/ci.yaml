@@ -4,7 +4,7 @@ on: [pull_request]
 
 jobs:
   build:
-    runs-on: macOS-latest
+    runs-on: macOS-12
     env:
       XCODE_VERSION: ${{ '14.0' }}
     steps:
