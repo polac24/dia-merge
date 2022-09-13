@@ -1,7 +1,7 @@
 #/!bin/bash
 
 
-: ${CLANG_VERSION:=13.0.0}
+: ${CLANG_VERSION:=15.0.0}
 
 LLVM_PACKAGE_PATH="$PWD/llvm.tar.gz"
 LLVM_UNZIPPED_PACKAGE_PATH="$PWD/llvm"
