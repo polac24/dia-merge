@@ -6,9 +6,9 @@ on:
 jobs:
   macOS:
     name: Add macOS binaries to the release page
-    runs-on: macOS-latest
+    runs-on: macOS-12
     env:
-      XCODE_VERSION: ${{ '13.1' }}
+      XCODE_VERSION: ${{ '14.0' }}
     permissions: write-all
     steps:
       - name: Select Xcode
