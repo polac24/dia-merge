@@ -25,6 +25,8 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "llvm/Bitstream/BitstreamWriter.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/Support/FileSystem.h"
 
 #include <regex>
 
