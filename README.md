@@ -35,7 +35,7 @@ _Note: There is a limit of the `.dia` file that this mode guarantees consistency
 
 ### DIA file
 
-DIA file is a bitcode formatted file that can be inspected with LLVM's bc-analyzer tool.  
+DIA file is a bitcode formatted file that can be inspected with LLVM's bc-analyzer tool.
 
 ## Example
 
@@ -43,7 +43,7 @@ If a project has source root `/source_root/`, on a producer side call:
 
 
 ```
-dia-merge -r `^/source_root/=./` -output /SomeDerivedData/Example/Build/Intermediates.noindex/Example.build/Debug-iphonesimulator/Example.build/Objects-normal/arm64/Example.dia /SomeDerivedData/Example/Build/Intermediates.noindex/Example.build/Debug-iphonesimulator/Example.build/Objects-normal/arm64/AppDelegate.dia /SomeDerivedData/Example/Build/Intermediates.noindex/Example.build/Debug-iphonesimulator/Example.build/Objects-normal/arm64/ViewController.dia 
+dia-merge -r `^/source_root/=./` -output /SomeDerivedData/Example/Build/Intermediates.noindex/Example.build/Debug-iphonesimulator/Example.build/Objects-normal/arm64/Example.dia /SomeDerivedData/Example/Build/Intermediates.noindex/Example.build/Debug-iphonesimulator/Example.build/Objects-normal/arm64/AppDelegate.dia /SomeDerivedData/Example/Build/Intermediates.noindex/Example.build/Debug-iphonesimulator/Example.build/Objects-normal/arm64/ViewController.dia
 ```
 
 On a consumer side, where a source root is `/other_source_root/`, call:
@@ -56,12 +56,12 @@ dia-merge -r `^\./=/other_source_root/` -output build_system/ExpectedLocation.di
 ## Build Instructions
 
 To build, first download LLVM prebuilt binary from https://github.com/llvm/llvm-project/releases, e.g. https://github.com/llvm/llvm-project/releases/download/llvmorg-13.0.0/clang+llvm-13.0.0-x86_64-apple-darwin.tar.xz
-So far, LLVM publishes only x86_64 architecture, so on arm64 machines, rosetta2 emulation is needed.
+LLVM publishes only arm64 architecture, so on x86_64 machines, you may need to built it locally.
 
 ```sh
 mkdir build
 cd build
-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64 -DLLVM_DIR=#{path_to_downloaded_clang} ..
+cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64 -DLLVM_DIR=#{path_to_downloaded_clang} ..
 ninja
 ```
 
@@ -70,7 +70,7 @@ See [RELEASING.md](RELEASING.md) for a fat-architecture.
 Or, if you prefer Xcode for building and debugging, you can replace the last 2 lines with the following:
 
 ```
-cmake -G Xcode -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64 -DLLVM_DIR=#{path_to_downloaded_clang} ..
+cmake -G Xcode -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64 -DLLVM_DIR=#{path_to_downloaded_clang} ..
 open dia-merge.xcodeproj
 ```
 
@@ -84,7 +84,7 @@ cd build
 curl -L "https://github.com/llvm/llvm-project/releases/download/llvmorg-13.0.0/clang+llvm-13.0.0-x86_64-apple-darwin.tar.xz" --output clang.zip
 mkdir -p clang-downloaded
 tar -xvf ./clang.zip -C clang-downloaded --strip 1
-cmake -G Xcode -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64 -DLLVM_DIR="$PWD/clang-downloaded" ..
+cmake -G Xcode -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64 -DLLVM_DIR="$PWD/clang-downloaded" ..
 open dia-merge.xcodeproj
 ```
 
