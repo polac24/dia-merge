@@ -1,7 +1,8 @@
 #/!bin/bash
 
 
-: ${CLANG_VERSION:=15.0.0}
+: ${CLANG_VERSION:=16.0.0}
+: ${DIST_SUFFIX:=arm64-apple-darwin22.0}
 
 LLVM_PACKAGE_PATH="$PWD/llvm.tar.gz"
 LLVM_UNZIPPED_PACKAGE_PATH="$PWD/llvm"
@@ -11,7 +12,7 @@ LLVM_UNZIPPED_PACKAGE_PATH="$PWD/llvm"
 
 
 # -L to follow redirects
-curl -L "https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}/clang+llvm-${CLANG_VERSION}-x86_64-apple-darwin.tar.xz" --output "$LLVM_PACKAGE_PATH"
+curl -L "https://github.com/llvm/llvm-project/releases/download/llvmorg-${CLANG_VERSION}/clang+llvm-${CLANG_VERSION}-${DIST_SUFFIX}.tar.xz" --output "$LLVM_PACKAGE_PATH"
 
 mkdir -p "$LLVM_UNZIPPED_PACKAGE_PATH"
 # --strip 1 to not include a wrapped dir and extract directly to $LLVM_UNZIPPED_PACKAGE_PATH
@@ -21,7 +22,7 @@ tar -xvf "$LLVM_PACKAGE_PATH" -C "$LLVM_UNZIPPED_PACKAGE_PATH" --strip 1
 # TODO: Using Xcode for now, as CI doesn't have ninja
 mkdir -p build
 pushd build
-cmake -G Xcode -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64 -DLLVM_DIR="$LLVM_UNZIPPED_PACKAGE_PATH" ..
+cmake -G Xcode -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64 -DLLVM_DIR="$LLVM_UNZIPPED_PACKAGE_PATH" ..
 
 ### Build a project
 xcodebuild -configuration Release
