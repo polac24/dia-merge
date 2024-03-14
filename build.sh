@@ -1,7 +1,7 @@
 #/!bin/bash
 
 
-: ${CLANG_VERSION:=16.0.0}
+: ${CLANG_VERSION:=17.0.6}
 : ${DIST_SUFFIX:=arm64-apple-darwin22.0}
 
 LLVM_PACKAGE_PATH="$PWD/llvm.tar.gz"
